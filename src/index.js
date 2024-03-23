@@ -10,8 +10,6 @@ const { REST, Routes, Client, GatewayIntentBits } = require('discord.js')
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
 const rest = new REST({ version: '10' }).setToken(TOKEN)
 
-
-const today = new Date()
 const links = {
     news: 'https://www.theenemy.com.br/news',
     reviews: 'https://www.theenemy.com.br/reviews',
@@ -53,11 +51,12 @@ async function scrapeNews(tag) {
         const newsList = []
 
         newsItems.each((_, element) => {
+
             const $element = $(element)
             const title = $element.find('.news-list__item__content__title').text().trim()
             const description = $element.find('.news-list__item__content__description').text().trim()
             const link = 'https://www.theenemy.com.br' + $element.find('.news-list__item__content__title').attr('href')
-            const imageUrl = $element.find('.news-list__item__content__info img').attr('src')
+            //const imageUrl = $element.find('.news-list__item__content__info img').attr('src')
             const date = $element.find('.news-list__item__content__info__time span').text().trim()
             const readingTime = $element.find('.reading-time__text').text().trim()
 
@@ -65,14 +64,12 @@ async function scrapeNews(tag) {
                 title,
                 description,
                 link,
-                imageUrl,
+                //imageUrl,
                 date,
                 readingTime
             }
 
-            if (date.substring(0, 2) == today.getDate()) {
-                newsList.push(newsItem)
-            }
+            newsList.push(newsItem)
 
         })
 
@@ -83,9 +80,15 @@ async function scrapeNews(tag) {
     }
 }
 
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`)
 })
+
+
+function formatNews(news) {
+    return `\n**[${news.title}](${news.link})**\n${news.description}\n${news.date}\nTempo de Leitura: ${news.readingTime}\n`
+}
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return
@@ -94,13 +97,24 @@ client.on('interactionCreate', async interaction => {
         try {
             const newsList = await scrapeNews(links.news)
             let response = ''
+            const maxNewsToShow = 5
 
-            newsList.forEach(news => {
-                if (news.date.substring(0, 2) == today.getDate()) {
-                    response += `
-                    \n**📰 Notícia** \n\nTítulo: **${news.title}**\nData: ${news.date}\nLink: ${news.link}\nTempo de Leitura: ${news.readingTime}\n`
+            if (newsList.length === 0) {
+                response = 'Nenhuma notícia encontrada.'
+            } else {
+                
+                if (newsList.length > maxNewsToShow) {
+                    response += '**📰 Últimas Notícias**\n'
+                    for (let i = 0; i < maxNewsToShow; i++) {
+                        response += formatNews(newsList[i])
+                    }
+                } else {
+                    newsList.forEach(news => {
+                        response += formatNews(news)
+                    })
                 }
-            })
+            }
+
             await interaction.reply(response)
         } catch (error) {
             console.error('Erro ao obter notícias:', error)
@@ -112,13 +126,24 @@ client.on('interactionCreate', async interaction => {
         try {
             const newsList = await scrapeNews(links.reviews)
             let response = ''
+            const maxNewsToShow = 5 
 
-            newsList.forEach(news => {
-                if (news.date.substring(0, 2) == today.getDate()) {
-                    response += `
-                    \n**⭐ Review** \n\nTítulo: **${news.title}**\nData: ${news.date}\nLink: ${news.link}\nTempo de Leitura: ${news.readingTime}\n`
+            if (newsList.length === 0) {
+                response = 'Nenhuma notícia encontrada.'
+            } else {
+                
+                if (newsList.length > maxNewsToShow) {
+                    response += '**⭐ Últimos Reviews**\n'
+                    for (let i = 0; i < maxNewsToShow; i++) {
+                        response += formatNews(newsList[i])
+                    }
+                } else {
+                    newsList.forEach(news => {
+                        response += formatNews(news)
+                    })
                 }
-            })
+            }
+
             await interaction.reply(response)
         } catch (error) {
             console.error('Erro ao obter notícias:', error)
@@ -130,19 +155,31 @@ client.on('interactionCreate', async interaction => {
         try {
             const newsList = await scrapeNews(links.esports)
             let response = ''
+            const maxNewsToShow = 5 
 
-            newsList.forEach(news => {
-                if (news.date.substring(0, 2) == today.getDate()) {
-                    response += `
-                    \n**🎮 E-Sports** \n\nTítulo: **${news.title}**\nData: ${news.date}\nLink: ${news.link}\nTempo de Leitura: ${news.readingTime}\n`
+            if (newsList.length === 0) {
+                response = 'Nenhuma notícia encontrada.'
+            } else {
+                
+                if (newsList.length > maxNewsToShow) {
+                    response += '**🎮 Últimas Notícias dos e-sports**\n'
+                    for (let i = 0; i < maxNewsToShow; i++) {
+                        response += formatNews(newsList[i])
+                    }
+                } else {
+                    newsList.forEach(news => {
+                        response += formatNews(news)
+                    })
                 }
-            })
+            }
+
             await interaction.reply(response)
         } catch (error) {
             console.error('Erro ao obter notícias:', error)
             await interaction.reply('Ocorreu um erro ao obter as notícias.')
         }
     }
+
 })
 
 
